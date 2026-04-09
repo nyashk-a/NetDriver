@@ -225,20 +225,14 @@ namespace Shared.Source.NetDriver.AC
                 Guid mainGuid = new Guid(rq.message.content.AsSpan(0, 16));
                 if (_contentBuilder.TryGetValue(mainGuid, out var pkgBuilder))
                 {
-                    await pkgBuilder.WritePackage(rq.message);
-                    SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("11")));
+                    pkgBuilder.WritePackage(rq.message);
+                    SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("39")));
                 }
                 else
                 {
-                    if (_contentBuilder.TryAdd(mainGuid, new MassiveContentBuilder(
-                            ReportClosure,
-                            mainGuid,
-                            rq.message.serialNumber,
-                            FromBinary.Utf16(rq.message.content.AsSpan(16).ToArray()
-                        )
-                    )))
+                    if (_contentBuilder.TryAdd(mainGuid, MassiveMessageConfigParser(rq.message)))
                     {
-                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("ready")));
+                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("4649")));
                     }
                     else
                     {

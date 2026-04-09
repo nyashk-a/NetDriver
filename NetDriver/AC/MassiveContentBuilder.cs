@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Shared.Source.NetDriver.AC
 {
@@ -104,22 +105,93 @@ namespace Shared.Source.NetDriver.AC
         private static readonly string swapDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
 
 
-        public readonly string pathToFolder;
+        public readonly string PathToFile;
         public readonly Guid FileGuid;
 
-        public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, string fileName)
-        {
+        private readonly FileStream _fileStream;
 
+        private readonly int _expectedQuantity;
+        private readonly int _chunkSize;
+        private readonly int _dataSize;
+
+        private int _nowCount = 0;
+        private long _totalBytesWritten = 0;
+
+        private readonly Action<MassiveContentBuilder> _disposeFunc;
+        private readonly object _lock = new object();
+
+        private readonly Channel<Message> _queueToWrite;
+        private readonly Task _fileWriterFunc;
+        private readonly CancellationTokenSource _cts = new();
+        private readonly HashSet<int> _addedList = new();
+
+        public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, int dataSize , string fileName)
+        {
+            _expectedQuantity = expectedQuantity;
+            _disposeFunc = disposeSelf;
+            _chunkSize = chunkSize;
+            _dataSize = dataSize;
+
+            PathToFile = Path.Combine(swapDir, fileName);
+            FileGuid = fileGuid;
+
+            _fileStream = new FileStream(PathToFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            _queueToWrite = Channel.CreateBounded<Message>(_expectedQuantity);
+
+            _fileWriterFunc = WritingContent(_cts.Token);
         }
 
-        public async Task WritePackage(Message msg)
+        public void WritePackage(Message msg)
         {
+            if (_addedList.Contains(msg.serialNumber)) return;
 
+            lock (_lock) { _nowCount++; }
+            _queueToWrite.Writer.TryWrite(msg);
+            _addedList.Add(msg.serialNumber);
+        }
+
+        private async Task WritingContent(CancellationToken token)
+        {
+            var reader = _queueToWrite.Reader;
+            try
+            {
+                await foreach (var msg in reader.ReadAllAsync(token))
+                {
+                    long position = (long)msg.serialNumber * _chunkSize;
+
+                    byte[] cnt = new byte[msg.content.Length - 16];
+                    Array.Copy(msg.content, 16, cnt, 0, cnt.Length);
+
+                    _fileStream.Position = position;
+
+                    await _fileStream.WriteAsync(cnt, 0, cnt.Length);
+
+                    Interlocked.Add(ref _totalBytesWritten, cnt.Length);
+
+                    lock (_lock)
+                    {
+                        if (_nowCount == _expectedQuantity)
+                        {
+                            _queueToWrite.Writer.Complete();
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _fileStream.SetLength(Interlocked.Read(ref _totalBytesWritten));
+                await _fileStream.FlushAsync();
+                _disposeFunc(this);
+            }
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _cts.Cancel();
+            _queueToWrite.Writer.TryComplete();
+            _fileWriterFunc.Wait(TimeSpan.FromSeconds(10));
+            _fileStream?.Dispose();
+            _cts.Dispose();
         }
     }
 }

@@ -31,19 +31,12 @@ namespace Shared.Source.NetDriver.AC
             Guid mg = Guid.NewGuid();
             byte[] mainGuid = mg.ToByteArray();
 
-            var dt = ToBinary.Utf16(fileName);
-
-            var confMessageData = new byte[dt.Length + 16];
-            Array.Copy(mainGuid, 0, confMessageData, 0, mainGuid.Length);
-            Array.Copy(dt, 0, confMessageData, 16, dt.Length);
-
-            var configMessage = new Message(mg, confMessageData, piceCount);
-            
+            var configMessage = MassiveMessageConfigParser(mg, fileSize, part, fileName, piceCount);
 
             List<Task<Message?>> sendingData = new();
 
             var firstAns = await SendReqMessageAsync(sock, configMessage);
-            if (firstAns != null && FromBinary.Utf16(firstAns.content) == "ready")
+            if (firstAns != null && FromBinary.Utf16(firstAns.content) == "4649")
             {
                 using (FileStream fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
                 {
@@ -70,7 +63,7 @@ namespace Shared.Source.NetDriver.AC
                     var res = await completedTask;
                     sendingData.Remove(completedTask);
 
-                    if (FromBinary.Utf16(res?.content) == "11")
+                    if (FromBinary.Utf16(res?.content) == "39")
                     {
                         complitedCount++;
 
@@ -92,6 +85,48 @@ namespace Shared.Source.NetDriver.AC
                     "the other party is not responding", 
                     LOGFOLDER));
             }
+        }
+
+        private Message MassiveMessageConfigParser(Guid msgGuid, long allDataSize, int chunkSize, string fileName, int piceCount)
+        {
+            //                  16    8                 4                 auto
+            // message conten - [guid][size of all data][single pack size][fileName]
+
+            var dt = ToBinary.Utf16(fileName);
+            byte[] mainGuid = msgGuid.ToByteArray();
+
+            var confMessageData = new byte[dt.Length + 16 + 8 + 4];
+
+            Array.Copy(mainGuid, 0, confMessageData, 0, mainGuid.Length);               // [guid]
+            Array.Copy(ToBinary.LittleEndian(allDataSize), 0, confMessageData, 16, 8);  // [data size]
+            Array.Copy(ToBinary.LittleEndian(chunkSize), 0, confMessageData, 16 + 8, 4);// [single pack size]
+            Array.Copy(dt, 0, confMessageData, 16 + 8 + 4, dt.Length);
+
+            return new Message(msgGuid, confMessageData, piceCount);
+        }
+
+        private MassiveContentBuilder MassiveMessageConfigParser(Message msg)
+        {
+            Guid msgGuid;
+            int allDataSize;
+            int chunkSize;
+            string fileName;
+            int piceCount;
+
+            msgGuid = new Guid(msg.content.AsSpan(0, 16));
+            allDataSize = FromBinary.LittleEndian<int>(msg.content.AsSpan(16, 8).ToArray());
+            chunkSize = FromBinary.LittleEndian<int>(msg.content.AsSpan(16 + 8, 4).ToArray());
+            fileName = FromBinary.Utf16(msg.content.AsSpan(16 + 8 + 4, (msg.content.Length - 16 - 8 - 4)).ToArray());
+            piceCount = msg.serialNumber;
+
+            return new MassiveContentBuilder(
+                ReportClosure,
+                msgGuid,
+                piceCount,
+                chunkSize,
+                allDataSize,
+                fileName
+                );
         }
 
 
