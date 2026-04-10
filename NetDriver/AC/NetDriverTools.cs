@@ -1,18 +1,9 @@
 ﻿using AVcontrol;
 using Shared.Source.tools;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
-using System.Reflection.PortableExecutable;
-using System.Text;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
-namespace Shared.Source.NetDriver.AC
+namespace NetDriver.AC
 {
     public abstract partial class INetdriverCore
     {
@@ -36,7 +27,7 @@ namespace Shared.Source.NetDriver.AC
             List<Task<Message?>> sendingData = new();
 
             var firstAns = await SendReqMessageAsync(sock, configMessage);
-            if (firstAns != null && FromBinary.Utf16(firstAns.content) == "4649")
+            if (firstAns != null && FromBinary.Utf16(firstAns.content) == "ready")
             {
                 using (FileStream fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
                 {
@@ -55,7 +46,6 @@ namespace Shared.Source.NetDriver.AC
                         sn++;
                     } 
                 }
-
                 while (sendingData.Any())
                 {
                     var completedTask = await Task.WhenAny(sendingData);
@@ -63,7 +53,7 @@ namespace Shared.Source.NetDriver.AC
                     var res = await completedTask;
                     sendingData.Remove(completedTask);
 
-                    if (FromBinary.Utf16(res?.content) == "39")
+                    if (FromBinary.Utf16(res?.content) == "catch")
                     {
                         complitedCount++;
 
@@ -71,6 +61,8 @@ namespace Shared.Source.NetDriver.AC
                     }
                     else
                     {
+                        Console.Write("fuck: ");
+                        Console.WriteLine(FromBinary.Utf16(res?.content));
                         DebugTool.Log(new DebugTool.log(
                         DebugTool.log.Level.Warning,
                         $"broken data send with {FromBinary.Utf16(res?.content)}",
@@ -108,13 +100,13 @@ namespace Shared.Source.NetDriver.AC
         private MassiveContentBuilder MassiveMessageConfigParser(Message msg)
         {
             Guid msgGuid;
-            int allDataSize;
+            long allDataSize;
             int chunkSize;
             string fileName;
             int piceCount;
 
             msgGuid = new Guid(msg.content.AsSpan(0, 16));
-            allDataSize = FromBinary.LittleEndian<int>(msg.content.AsSpan(16, 8).ToArray());
+            allDataSize = FromBinary.LittleEndian<Int64>(msg.content.AsSpan(16, 8).ToArray());
             chunkSize = FromBinary.LittleEndian<int>(msg.content.AsSpan(16 + 8, 4).ToArray());
             fileName = FromBinary.Utf16(msg.content.AsSpan(16 + 8 + 4, (msg.content.Length - 16 - 8 - 4)).ToArray());
             piceCount = msg.serialNumber;

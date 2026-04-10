@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Shared.Source.NetDriver.AC.Client
+namespace NetDriver.AC.Client
 {
     public class ClientNetDriver : INetdriverCore
     {

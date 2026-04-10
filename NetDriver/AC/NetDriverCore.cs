@@ -11,7 +11,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Shared.Source.NetDriver.AC
+namespace NetDriver.AC
 {
     public abstract partial class INetdriverCore
     {
@@ -226,13 +226,13 @@ namespace Shared.Source.NetDriver.AC
                 if (_contentBuilder.TryGetValue(mainGuid, out var pkgBuilder))
                 {
                     pkgBuilder.WritePackage(rq.message);
-                    SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("39")));
+                    SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("catch")));
                 }
                 else
                 {
                     if (_contentBuilder.TryAdd(mainGuid, MassiveMessageConfigParser(rq.message)))
                     {
-                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("4649")));
+                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("ready")));
                     }
                     else
                     {
@@ -246,7 +246,7 @@ namespace Shared.Source.NetDriver.AC
             }
             catch (Exception e)
             {
-                SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16(e.Message)));
+                SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16(e.ToString())));
                 DebugTool.Log(new DebugTool.log(
                             DebugTool.log.Level.Error,
                             e.Message,

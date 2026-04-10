@@ -2,7 +2,7 @@
 using Shared.Source.tools;
 using System;
 
-namespace Shared.Source.NetDriver.AC
+namespace NetDriver.AC
 {
     public class Message
     {

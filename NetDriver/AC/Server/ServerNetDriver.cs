@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Shared.Source.NetDriver.AC.Server
+namespace NetDriver.AC.Server
 {
     public class ServerNetDriver : INetdriverCore
     {

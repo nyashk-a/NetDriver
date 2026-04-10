@@ -6,7 +6,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace Shared.Source.NetDriver.AC
+namespace NetDriver.AC
 {
     //public class MassiveContentBuilder : IDisposable
     //{
@@ -112,7 +112,7 @@ namespace Shared.Source.NetDriver.AC
 
         private readonly int _expectedQuantity;
         private readonly int _chunkSize;
-        private readonly int _dataSize;
+        private readonly long _dataSize;
 
         private int _nowCount = 0;
         private long _totalBytesWritten = 0;
@@ -125,7 +125,7 @@ namespace Shared.Source.NetDriver.AC
         private readonly CancellationTokenSource _cts = new();
         private readonly HashSet<int> _addedList = new();
 
-        public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, int dataSize , string fileName)
+        public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, long dataSize , string fileName)
         {
             _expectedQuantity = expectedQuantity;
             _disposeFunc = disposeSelf;
@@ -135,7 +135,8 @@ namespace Shared.Source.NetDriver.AC
             PathToFile = Path.Combine(swapDir, fileName);
             FileGuid = fileGuid;
 
-            _fileStream = new FileStream(PathToFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            Directory.CreateDirectory(swapDir);
+            _fileStream = File.Create(PathToFile);
             _queueToWrite = Channel.CreateBounded<Message>(_expectedQuantity);
 
             _fileWriterFunc = WritingContent(_cts.Token);
@@ -145,7 +146,6 @@ namespace Shared.Source.NetDriver.AC
         {
             if (_addedList.Contains(msg.serialNumber)) return;
 
-            lock (_lock) { _nowCount++; }
             _queueToWrite.Writer.TryWrite(msg);
             _addedList.Add(msg.serialNumber);
         }
@@ -165,9 +165,9 @@ namespace Shared.Source.NetDriver.AC
                     _fileStream.Position = position;
 
                     await _fileStream.WriteAsync(cnt, 0, cnt.Length);
+                    lock (_lock) { _nowCount++; }
 
                     Interlocked.Add(ref _totalBytesWritten, cnt.Length);
-
                     lock (_lock)
                     {
                         if (_nowCount == _expectedQuantity)

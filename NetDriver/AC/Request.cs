@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared.Source.NetDriver.AC
+namespace NetDriver.AC
 {
     public class Request
     {
