@@ -4,102 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NetDriver.AC
 {
-    //public class MassiveContentBuilder : IDisposable
-    //{
-    //    private static readonly string swapDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
-    //    private readonly ConcurrentDictionary<int, Message> _hash = new();
-    //    private readonly Channel<Message> _queueToWrite;
-    //    private readonly int expectedQuantity;
-    //    private readonly CancellationTokenSource _cts = new();
-    //    private readonly Task _bgTask;
-    //    private bool _disposed = false;
-    //    private readonly FileStream _filewriter;
-    //    private volatile int actualNumder = 0;
-    //    private readonly Action<MassiveContentBuilder> _disposeSelf;
-
-    //    public readonly string pathToFolder;
-    //    public readonly Guid FileGuid;
-
-
-
-    //    public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, string fileName)
-    //    {
-    //        _disposeSelf = disposeSelf;
-
-    //        this.expectedQuantity = expectedQuantity;
-    //        FileGuid = fileGuid;
-    //        pathToFolder = Path.Combine(swapDir, fileName);
-    //        _queueToWrite = Channel.CreateBounded<Message>(expectedQuantity);
-
-    //        _bgTask = WritingContent(_cts.Token);
-
-    //        Directory.CreateDirectory(swapDir);
-    //        _filewriter = File.Create(pathToFolder);
-    //    }
-    //    public async Task WritePackage(Message msg)
-    //    {
-    //        if (_disposed) return;
-
-    //        int current = Interlocked.CompareExchange(ref actualNumder, 0, 0);
-    //        if (msg.serialNumber >= current)
-    //        {
-    //            _queueToWrite.Writer.TryWrite(msg);
-    //        }
-    //        _hash.TryAdd(msg.serialNumber, msg);
-    //    }
-
-    //    private async Task WritingContent(CancellationToken token)
-    //    {
-    //        var reader = _queueToWrite.Reader;
-    //        try
-    //        {
-    //            await foreach (var msg in reader.ReadAllAsync(token))
-    //            {
-    //                if (msg.serialNumber == actualNumder)
-    //                {
-    //                    byte[] cnt = new byte[msg.content.Length - 16];
-    //                    Array.Copy(msg.content, 16, cnt, 0, cnt.Length);
-    //                    await _filewriter.WriteAsync(cnt);
-    //                    _hash.TryRemove(actualNumder, out _);
-    //                    actualNumder = actualNumder + 1;
-    //                }
-
-    //                while (_hash.TryGetValue(actualNumder, out var nMsg))
-    //                {
-    //                    byte[] cnt = new byte[nMsg.content.Length - 16];
-    //                    Array.Copy(nMsg.content, 16, cnt, 0, cnt.Length);
-    //                    await _filewriter.WriteAsync(cnt);
-    //                    _hash.TryRemove(actualNumder, out _);
-    //                    actualNumder = actualNumder + 1;
-    //                }
-
-    //                if (actualNumder == expectedQuantity)
-    //                {
-    //                    _queueToWrite.Writer.Complete();
-    //                }
-    //            }
-    //        }
-    //        finally
-    //        {
-    //            _disposeSelf(this);
-    //        }
-    //    }
-
-    //    public void Dispose()
-    //    {
-    //        _disposed = true;
-    //        _cts.Cancel();
-    //        _bgTask.Wait(TimeSpan.FromSeconds(5));
-    //        _queueToWrite.Writer.TryComplete();
-    //        _filewriter?.Dispose();
-    //        _cts.Dispose();
-    //    }
-    //}
-
     public class MassiveContentBuilder : IDisposable
     {
         private static readonly string swapDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
@@ -123,7 +30,7 @@ namespace NetDriver.AC
         private readonly Channel<Message> _queueToWrite;
         private readonly Task _fileWriterFunc;
         private readonly CancellationTokenSource _cts = new();
-        private readonly HashSet<int> _addedList = new();
+        private readonly ConcurrentDictionary<int, byte> _addedList = new(); // экей ConcurrentHashSet<>
 
         public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, long dataSize , string fileName)
         {
@@ -144,10 +51,9 @@ namespace NetDriver.AC
 
         public void WritePackage(Message msg)
         {
-            if (_addedList.Contains(msg.serialNumber)) return;
+            if (!_addedList.TryAdd(msg.serialNumber, 0)) return;
 
             _queueToWrite.Writer.TryWrite(msg);
-            _addedList.Add(msg.serialNumber);
         }
 
         private async Task WritingContent(CancellationToken token)
@@ -159,27 +65,22 @@ namespace NetDriver.AC
                 {
                     long position = (long)msg.serialNumber * _chunkSize;
 
-                    byte[] cnt = new byte[msg.content.Length - 16];
-                    Array.Copy(msg.content, 16, cnt, 0, cnt.Length);
-
                     _fileStream.Position = position;
 
-                    await _fileStream.WriteAsync(cnt, 0, cnt.Length);
-                    lock (_lock) { _nowCount++; }
+                    await _fileStream.WriteAsync(msg.content.AsMemory(16, msg.content.Length - 16), token);
 
-                    Interlocked.Add(ref _totalBytesWritten, cnt.Length);
-                    lock (_lock)
+                    Interlocked.Increment(ref _nowCount);
+
+                    Interlocked.Add(ref _totalBytesWritten, msg.content.Length - 16);
+                    if (Volatile.Read(ref _nowCount) == _expectedQuantity)
                     {
-                        if (_nowCount == _expectedQuantity)
-                        {
-                            _queueToWrite.Writer.Complete();
-                        }
+                        _queueToWrite.Writer.Complete();
                     }
                 }
             }
             finally
             {
-                _fileStream.SetLength(Interlocked.Read(ref _totalBytesWritten));
+                //_fileStream.SetLength(Interlocked.Read(ref _totalBytesWritten));          мб это банально не нужно?
                 await _fileStream.FlushAsync();
                 _disposeFunc(this);
             }
