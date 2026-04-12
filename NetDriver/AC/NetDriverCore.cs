@@ -53,13 +53,14 @@ namespace NetDriver.AC
                 _cts.Cancel();
 
                 Task.WhenAll(_backgroundTasks).Wait(TimeSpan.FromSeconds(10));
+                DebugTool.Shutdown().Wait(TimeSpan.FromSeconds(2));
 
                 _dispatchChannel.Writer.TryComplete();
                 _incomingChannel.Writer.TryComplete();
 
                 foreach (var builder in _contentBuilder.Values)
                 {
-                    builder.Dispose();
+                    _ = builder.DisposeAsync();
                 }
                 _contentBuilder.Clear();
 
@@ -69,7 +70,6 @@ namespace NetDriver.AC
                 }
                 _pendingRequests.Clear();
 
-                DebugTool.Shutdown().Wait(TimeSpan.FromSeconds(2));
                 _cts.Dispose();
                 _cleaningTask.Dispose();
             }
@@ -125,7 +125,7 @@ namespace NetDriver.AC
                         continue;
                     }
 
-                    _incomingChannel.Writer.TryWrite(rq);
+                    await _incomingChannel.Writer.WriteAsync(rq);
                 }
                 catch (Exception ex)
                 {
@@ -150,7 +150,7 @@ namespace NetDriver.AC
                     DebugTool.Log(new DebugTool.log(DebugTool.log.Level.Error, "SendReqMessageAsync: can`t add message to dict", LOGFOLDER));
                 }
 
-                _dispatchChannel.Writer.TryWrite(rq);
+                await _dispatchChannel.Writer.WriteAsync(rq);
 
 
                 using (cts.Token.Register(() => tcs.TrySetCanceled()))
@@ -176,11 +176,11 @@ namespace NetDriver.AC
             }
         }
 
-        public void SendAnsMessageAsync(Socket sock, Message msg)                                   // не ожидаем ответа
+        public async Task SendAnsMessageAsync(Socket sock, Message msg)                                   // не ожидаем ответа
         {
             var rq = new Request(msg, sock);
 
-            _dispatchChannel.Writer.TryWrite(rq);
+            await _dispatchChannel.Writer.WriteAsync(rq);
         }
 
         private async Task DispatchQueueController(CancellationToken cancellationToken = default)
@@ -225,14 +225,14 @@ namespace NetDriver.AC
                 Guid mainGuid = new Guid(rq.message.content.AsSpan(0, 16));
                 if (_contentBuilder.TryGetValue(mainGuid, out var pkgBuilder))
                 {
-                    pkgBuilder.WritePackage(rq.message);
-                    SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("catch")));
+                    await pkgBuilder.WritePackage(rq.message);
+                    await SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("catch")));
                 }
                 else
                 {
                     if (_contentBuilder.TryAdd(mainGuid, MassiveMessageConfigParser(rq.message)))
                     {
-                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("ready")));
+                        await SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("ready")));
                     }
                     else
                     {
@@ -240,13 +240,13 @@ namespace NetDriver.AC
                             DebugTool.log.Level.Error, 
                             "ListeningSocket: can`t add message to dict", 
                             LOGFOLDER));
-                        SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("broke")));
+                        await SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16("broke")));
                     }
                 }
             }
             catch (Exception e)
             {
-                SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16(e.ToString())));
+                await SendAnsMessageAsync(sock, new Message(rq.message.msgsuid, ToBinary.Utf16(e.ToString())));
                 DebugTool.Log(new DebugTool.log(
                             DebugTool.log.Level.Error,
                             e.Message,

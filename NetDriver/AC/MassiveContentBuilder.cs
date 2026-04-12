@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NetDriver.AC
 {
-    public class MassiveContentBuilder : IDisposable
+    public class MassiveContentBuilder
     {
         private static readonly string swapDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
 
@@ -24,15 +24,16 @@ namespace NetDriver.AC
         private int _nowCount = 0;
         private long _totalBytesWritten = 0;
 
-        private readonly Action<MassiveContentBuilder> _disposeFunc;
+        private readonly Func<MassiveContentBuilder, Task> _disposeFunc;
         private readonly object _lock = new object();
 
         private readonly Channel<Message> _queueToWrite;
         private readonly Task _fileWriterFunc;
         private readonly CancellationTokenSource _cts = new();
         private readonly ConcurrentDictionary<int, byte> _addedList = new(); // экей ConcurrentHashSet<>
+        private bool _isDisposed = false;
 
-        public MassiveContentBuilder(Action<MassiveContentBuilder> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, long dataSize , string fileName)
+        public MassiveContentBuilder(Func<MassiveContentBuilder, Task> disposeSelf, Guid fileGuid, int expectedQuantity, int chunkSize, long dataSize , string fileName)
         {
             _expectedQuantity = expectedQuantity;
             _disposeFunc = disposeSelf;
@@ -43,17 +44,19 @@ namespace NetDriver.AC
             FileGuid = fileGuid;
 
             Directory.CreateDirectory(swapDir);
-            _fileStream = File.Create(PathToFile);
+            _fileStream = new FileStream(PathToFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
             _queueToWrite = Channel.CreateBounded<Message>(_expectedQuantity);
 
             _fileWriterFunc = WritingContent(_cts.Token);
+
+            _ = _fileWriterFunc.ContinueWith(async _ => await _disposeFunc(this), TaskScheduler.Default);
         }
 
-        public void WritePackage(Message msg)
+        public async Task WritePackage(Message msg)
         {
             if (!_addedList.TryAdd(msg.serialNumber, 0)) return;
 
-            _queueToWrite.Writer.TryWrite(msg);
+            await _queueToWrite.Writer.WriteAsync(msg);
         }
 
         private async Task WritingContent(CancellationToken token)
@@ -63,16 +66,16 @@ namespace NetDriver.AC
             {
                 await foreach (var msg in reader.ReadAllAsync(token))
                 {
+                    if (msg.content.Length < 16) continue;
+
                     long position = (long)msg.serialNumber * _chunkSize;
 
                     _fileStream.Position = position;
 
                     await _fileStream.WriteAsync(msg.content.AsMemory(16, msg.content.Length - 16), token);
 
-                    Interlocked.Increment(ref _nowCount);
-
                     Interlocked.Add(ref _totalBytesWritten, msg.content.Length - 16);
-                    if (Volatile.Read(ref _nowCount) == _expectedQuantity)
+                    if (Interlocked.Increment(ref _nowCount) == _expectedQuantity)
                     {
                         _queueToWrite.Writer.Complete();
                     }
@@ -82,16 +85,19 @@ namespace NetDriver.AC
             {
                 //_fileStream.SetLength(Interlocked.Read(ref _totalBytesWritten));          мб это банально не нужно?
                 await _fileStream.FlushAsync();
-                _disposeFunc(this);
             }
         }
 
-        public void Dispose()
+        public async Task DisposeAsync()
         {
+            if (_isDisposed) return;
+            _isDisposed = true;
             _cts.Cancel();
             _queueToWrite.Writer.TryComplete();
-            _fileWriterFunc.Wait(TimeSpan.FromSeconds(10));
-            _fileStream?.Dispose();
+
+
+            await _fileWriterFunc;
+            _fileStream?.DisposeAsync();
             _cts.Dispose();
         }
     }

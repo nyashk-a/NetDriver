@@ -45,9 +45,9 @@ namespace NetDriver.AC
         }
         public Message(byte[] pack)
         {
-            if (pack.Length < 8)
+            if (pack.Length < 12)
             {
-                DebugTool.Log(new DebugTool.log(DebugTool.log.Level.Error, "pack too short", "MessageLogs.txt"));
+                throw new Exception("pack too short");
             }
             int contentSize = FromBinary.LittleEndian<int>(pack.AsSpan(0, 4).ToArray());
             int idSize = FromBinary.LittleEndian<int>(pack.AsSpan(4, 4).ToArray());
@@ -60,6 +60,10 @@ namespace NetDriver.AC
         }
         public static sizeConf PartialParse(byte[] pack)
         {
+            if (pack.Length < 12)
+            {
+                throw new Exception("pack too short");
+            }
             var sc = new sizeConf();
             sc.contentSize = FromBinary.LittleEndian<int>(pack.AsSpan(0, 4).ToArray());
             sc.idSize = FromBinary.LittleEndian<int>(pack.AsSpan(4, 4).ToArray());

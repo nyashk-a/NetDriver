@@ -30,16 +30,25 @@ namespace NetDriver.AC.Server
             socket.Bind(endPoint);
             socket.Listen();
 
-            _backgroundTasks.Add(AceptingConnections());
+            _backgroundTasks.Add(AcceptAsync());
         }
 
-        private async Task AceptingConnections()
+        private async Task AcceptAsync()
         {
             while (!_cts.Token.IsCancellationRequested)
             {
-                var clientConnection = await socket.AcceptAsync(_cts.Token);
-                var dl = new DisposableListening();
-                Users.TryAdd(clientConnection, dl.Init(ListeningSocket(clientConnection, dl.Cts.Token)));
+                try
+                {
+                    var clientConnection = await socket.AcceptAsync(_cts.Token);
+                    var dl = new DisposableListening();
+                    var tsk = ListeningSocket(clientConnection, dl.Cts.Token);
+                    Users.TryAdd(clientConnection, dl.Init(tsk));
+                    _backgroundTasks.Add(tsk);
+                }
+                catch (Exception e)
+                {
+                    DebugTool.Log(new DebugTool.log(DebugTool.log.Level.Error, e.Message, LOGFOLDER));
+                }
             }
         }
 
@@ -47,14 +56,17 @@ namespace NetDriver.AC.Server
         {
             try
             {
-                _cts.Cancel();
-                foreach (var s in Users)
-                {
-                    s.Key.Close();
-                    s.Key.Dispose();
-                    s.Value.Cts.Cancel();
-                    s.Value.Cts.Dispose();
-                }
+                    _cts.Cancel();
+                    foreach (var s in Users)
+                    {
+                        s.Key.Close();
+                        s.Value.Cts.Cancel();
+                    }
+                    foreach (var s in Users)
+                    {
+                        s.Key.Dispose();
+                        s.Value.Cts.Dispose();
+                    }
                 socket.Close();
                 socket.Dispose();
                 _cts.Dispose();
@@ -66,7 +78,7 @@ namespace NetDriver.AC.Server
             }
         }
 
-        public class DisposableListening()
+        public class DisposableListening() : IDisposable
         {
             private Task Listening;
             public readonly CancellationTokenSource Cts = new();
@@ -75,6 +87,12 @@ namespace NetDriver.AC.Server
             {
                 Listening = listening;
                 return this;
+            }
+
+            public void Dispose()
+            {
+                Cts.Cancel();
+                Cts.Dispose();
             }
         }
     }

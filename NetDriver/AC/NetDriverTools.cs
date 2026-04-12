@@ -57,12 +57,10 @@ namespace NetDriver.AC
                     {
                         complitedCount++;
 
-                        progress?.Report($"{(((float)complitedCount / (float)piceCount) * 100.0f):F1}%");
+                        progress?.Report($"{complitedCount / piceCount * 100.0f:F1}%");
                     }
                     else
                     {
-                        Console.Write("fuck: ");
-                        Console.WriteLine(FromBinary.Utf16(res?.content));
                         DebugTool.Log(new DebugTool.log(
                         DebugTool.log.Level.Warning,
                         $"broken data send with {FromBinary.Utf16(res?.content)}",
@@ -132,7 +130,7 @@ namespace NetDriver.AC
                 {
                     if (_contentBuilder.TryGetValue(gd, out var pkgBuilder))
                     {
-                        pkgBuilder.Dispose();
+                        await pkgBuilder.DisposeAsync();
                         _contentBuilder.TryRemove(gd, out _);
                     }
                 }
@@ -142,9 +140,9 @@ namespace NetDriver.AC
                 }
             }
         }
-        private void ReportClosure(MassiveContentBuilder self)            // только для MassiveContentBuilder!
+        private async Task ReportClosure(MassiveContentBuilder self)            // только для MassiveContentBuilder!
         {
-            _builderDisposeChannel.Writer.TryWrite(self.FileGuid);
+            await _builderDisposeChannel.Writer.WriteAsync(self.FileGuid);
         }
     }
 }

@@ -3,28 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\massivecontentbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\massivecontentbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ad\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ad\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\netdrivertools.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\netdrivertools.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\request.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\request.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\server\\servernetdriver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\server\\servernetdriver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\client\\clientnetdriver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\client\\clientnetdriver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ad\\inetworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ad\\inetworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,80 +18,32 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Request.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Request.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\Request.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Request.cs",
-              "RelativeToolTip": "NetDriver\\AC\\Request.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-10T13:59:44.809Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "ClientNetDriver.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Client\\ClientNetDriver.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\Client\\ClientNetDriver.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Client\\ClientNetDriver.cs",
-              "RelativeToolTip": "NetDriver\\AC\\Client\\ClientNetDriver.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-10T13:59:26.502Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "ServerNetDriver.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Server\\ServerNetDriver.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\Server\\ServerNetDriver.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Server\\ServerNetDriver.cs",
-              "RelativeToolTip": "NetDriver\\AC\\Server\\ServerNetDriver.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-10T13:59:25.101Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Message.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Message.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\Message.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\Message.cs",
-              "RelativeToolTip": "NetDriver\\AC\\Message.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAgwAQAAAAKAAAAAAAAAA==",
+              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\Message.cs",
+              "RelativeDocumentMoniker": "NetDriver\\AD\\Message.cs",
+              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\Message.cs",
+              "RelativeToolTip": "NetDriver\\AD\\Message.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-10T13:59:21.066Z",
+              "WhenOpened": "2026-04-12T19:10:09.61Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "NetDriverTools.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\NetDriverTools.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\NetDriverTools.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\NetDriverTools.cs",
-              "RelativeToolTip": "NetDriver\\AC\\NetDriverTools.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAAAgwEAAAABIAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "INetworker.cs",
+              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\INetworker.cs",
+              "RelativeDocumentMoniker": "NetDriver\\AD\\INetworker.cs",
+              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\INetworker.cs",
+              "RelativeToolTip": "NetDriver\\AD\\INetworker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T15:35:32.637Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "MassiveContentBuilder.cs",
-              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\MassiveContentBuilder.cs",
-              "RelativeDocumentMoniker": "NetDriver\\AC\\MassiveContentBuilder.cs",
-              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\MassiveContentBuilder.cs",
-              "RelativeToolTip": "NetDriver\\AC\\MassiveContentBuilder.cs",
-              "ViewState": "AgIAACkAAAAAAAAAAAAAAFgAAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T15:17:52.765Z",
+              "WhenOpened": "2026-04-12T19:09:01.827Z",
               "EditorCaption": ""
             }
           ]
