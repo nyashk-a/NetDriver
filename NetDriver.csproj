@@ -9,10 +9,13 @@
 
   <ItemGroup>
     <Reference Include="AVcontrol">
-      <HintPath>..\ReMessenger\Shared\bin\Release\net10.0\AVcontrol.dll</HintPath>
+      <HintPath>..\ReMessenger\lib\AVcontrol\AVcontrol.dll</HintPath>
+    </Reference>
+    <Reference Include="JabrAPI">
+      <HintPath>..\ReMessenger\lib\JabrAPI\Preview\JabrAPI.dll</HintPath>
     </Reference>
     <Reference Include="Shared">
-      <HintPath>..\ReMessenger\Shared\bin\Release\net10.0\Shared.dll</HintPath>
+      <HintPath>..\ReMessenger\lib\Shared\Shared.dll</HintPath>
     </Reference>
   </ItemGroup>
 
