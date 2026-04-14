@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\netdrivercore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\netdrivercore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ad\\inetworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ad\\inetworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ac\\netdrivercore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ac\\netdrivercore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ad\\source.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ad\\source.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|c:\\users\\suzi\\documents\\projects\\csp\\netdriver\\netdriver\\ad\\resourcecontrol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EBB2E9B0-9063-EC1D-3393-2CDA42FCC695}|NetDriver.csproj|solutionrelative:netdriver\\ad\\resourcecontrol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,17 +26,43 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
+              "Title": "Source.cs",
+              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\Source.cs",
+              "RelativeDocumentMoniker": "NetDriver\\AD\\Source.cs",
+              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\Source.cs",
+              "RelativeToolTip": "NetDriver\\AD\\Source.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T17:18:08.713Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ResourceControl.cs",
+              "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\ResourceControl.cs",
+              "RelativeDocumentMoniker": "NetDriver\\AD\\ResourceControl.cs",
+              "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\ResourceControl.cs",
+              "RelativeToolTip": "NetDriver\\AD\\ResourceControl.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAC4AAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T16:20:14.898Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "INetworker.cs",
               "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\INetworker.cs",
               "RelativeDocumentMoniker": "NetDriver\\AD\\INetworker.cs",
               "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AD\\INetworker.cs",
               "RelativeToolTip": "NetDriver\\AD\\INetworker.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAA6AAAAAAAAAA==",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAwwDsAAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-12T19:09:01.827Z",
               "EditorCaption": ""
@@ -41,13 +75,13 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "NetDriverCore.cs",
               "DocumentMoniker": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\NetDriverCore.cs",
               "RelativeDocumentMoniker": "NetDriver\\AC\\NetDriverCore.cs",
               "ToolTip": "C:\\Users\\suzi\\Documents\\projects\\csP\\NetDriver\\NetDriver\\AC\\NetDriverCore.cs",
               "RelativeToolTip": "NetDriver\\AC\\NetDriverCore.cs",
-              "ViewState": "AgIAAEIAAAAAAAAAAAAowAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAPwAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-14T14:13:50.346Z",
               "EditorCaption": ""
