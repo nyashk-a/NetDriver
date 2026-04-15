@@ -22,7 +22,6 @@ namespace NetDriver.AC
         private readonly long _dataSize;
 
         private int _nowCount = 0;
-        private long _totalBytesWritten = 0;
 
         private readonly Func<MassiveContentBuilder, Task> _disposeFunc;
         private readonly object _lock = new object();
@@ -74,7 +73,6 @@ namespace NetDriver.AC
 
                     await _fileStream.WriteAsync(msg.content.AsMemory(16, msg.content.Length - 16), token);
 
-                    Interlocked.Add(ref _totalBytesWritten, msg.content.Length - 16);
                     if (Interlocked.Increment(ref _nowCount) == _expectedQuantity)
                     {
                         _queueToWrite.Writer.Complete();

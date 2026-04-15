@@ -19,8 +19,7 @@ namespace NetDriver.AD
             PartFromFileMessage = 0b00100000,
         }
 
-        private readonly byte[] Data;
-
+        public readonly byte[] content;
         public readonly Types msgType;
         public readonly Guid msgSuid;
         public readonly int? packNum;
@@ -32,7 +31,7 @@ namespace NetDriver.AD
             int? packnum = null
             )
         {
-            Data = data;
+            content = data;
             msgType = type;
             msgSuid = suid == null ? Guid.NewGuid() : suid.Value;
             packNum = packnum;
@@ -42,8 +41,8 @@ namespace NetDriver.AD
 
         public Message(MessageConfig msgConf, byte[] pack)
         {
-            Data = new byte[msgConf.DataSize];
-            Buffer.BlockCopy(pack, 0, Data, 0, msgConf.DataSize);
+            content = new byte[msgConf.DataSize];
+            Buffer.BlockCopy(pack, 0, content, 0, msgConf.DataSize);
 
             msgType = msgConf.msgType;
             msgSuid = msgConf.msgSuid;
@@ -57,27 +56,27 @@ namespace NetDriver.AD
             msgSuid = new Guid(pack.AsSpan(5, 16));
 
             int datasize = FromBinary.LittleEndian<int>(pack.AsSpan(0, 4));
-            Data = new byte[datasize];
-            Buffer.BlockCopy(pack, 16 + 1 + 4, Data, 0, datasize);
+            content = new byte[datasize];
+            Buffer.BlockCopy(pack, 16 + 1 + 4, content, 0, datasize);
 
             packNum = msgType == Types.PartFromFileMessage ? FromBinary.LittleEndian<int>(pack.AsSpan(21 + datasize, 4)) : null;
         }
 
         public byte[] pack { get
             {
-                var pck = new byte[4 + 1 + 16 + Data.Length + (msgType == Types.PartFromFileMessage ? 4 : 0)];
-                Buffer.BlockCopy(ToBinary.LittleEndian(Data.Length), 0, pck, 0, 4);
+                var pck = new byte[4 + 1 + 16 + content.Length + (msgType == Types.PartFromFileMessage ? 4 : 0)];
+                Buffer.BlockCopy(ToBinary.LittleEndian(content.Length), 0, pck, 0, 4);
                 pck[4] = (byte)msgType;
                 Buffer.BlockCopy(msgSuid.ToByteArray(), 0, pck, 4 + 1, 16);
-                Buffer.BlockCopy(Data, 0, pck, 4 + 1 + 16, Data.Length);
-                if (msgType == Types.PartFromFileMessage) Buffer.BlockCopy(ToBinary.LittleEndian(packNum.Value), 0, pck, 4 + 1 + 16 + Data.Length, 4);
+                Buffer.BlockCopy(content, 0, pck, 4 + 1 + 16, content.Length);
+                if (msgType == Types.PartFromFileMessage) Buffer.BlockCopy(ToBinary.LittleEndian(packNum.Value), 0, pck, 4 + 1 + 16 + content.Length, 4);
                 return pck;
             }
         }
 
         public static MessageConfig PartialParse(byte[] pack)
         {
-            if (pack.Length != 21) throw new Exception("pack is to short");
+            if (pack.Length != 21) throw new Exception("pack size not is 21");
             return new MessageConfig
             (
                 FromBinary.LittleEndian<int>(pack.AsSpan(0, 4)),

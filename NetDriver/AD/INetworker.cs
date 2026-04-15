@@ -1,4 +1,5 @@
-﻿using JabrAPI;
+﻿using AVcontrol;
+using JabrAPI;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -64,6 +65,10 @@ namespace NetDriver.AD
                 switch (ir.message.msgType)
                 {
                     case Message.Types.ConfigurateMessage:
+                        var suid = new Guid(ir.message.content.AsSpan(0, 16));
+                        int singlePackSize = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16, 4));
+                        int packCount = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16 + 4, 4));
+                        string name = FromBinary.Utf16(ir.message.content.AsSpan(16 + 4 + 4, ir.message.content.Length - (16 + 4 + 4)));
                         break;
                     case Message.Types.PartFromFileMessage:
                         break;
