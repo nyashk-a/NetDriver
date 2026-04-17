@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace NetDriver.AD
@@ -59,7 +61,7 @@ namespace NetDriver.AD
 
                     var res = await ct;
 
-                    if (res == null)
+                    if (FromBinary.Utf16(res.content) != "catch")
                     {
                         var buffer = new byte[part];
                         sendingData.TryGetValue(ct, out var sn);
@@ -78,6 +80,12 @@ namespace NetDriver.AD
                     sendingData.Remove(ct, out _);
                 }
             }
+        }
+
+        private async Task DisposeBuildder(Guid suid)
+        {
+            if (_buildersList.Remove(suid, out var cb))
+                await cb.DisposeAsync();
         }
     }
 }

@@ -16,9 +16,12 @@ namespace NetDriver.AD
         private readonly ConcurrentDictionary<int, byte?> hash = new();
         private int writeNow = 0;
 
+        private readonly Task _write;
         private readonly Channel<ChunkWriteRQ> writeQueue = Channel.CreateUnbounded<ChunkWriteRQ>();
 
-        public ContentBuilder(string fileName, int chunkSize, int chunkCount, Action<ContentBuilder> disposeBuilder)
+        private readonly CancellationTokenSource _cts;
+
+        public ContentBuilder(string fileName, int chunkSize, int chunkCount, Func<Guid, Task> disposeBuilder, Guid suid)
         {
             var pathToFile = Path.Combine(swapDir, fileName);
             _chunkSize = chunkSize;
@@ -27,18 +30,22 @@ namespace NetDriver.AD
             Directory.CreateDirectory(swapDir);
             _fs = new FileStream(pathToFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
 
-            var ts = new CancellationTokenSource();
-            if (ResourceControl.AnnounceTask(WriterTask(ts.Token).ContinueWith(_ => { disposeBuilder(this) }), ts))
+            _cts = new CancellationTokenSource(TimeSpan.FromSeconds(3000));
+
+            _write = WriterTask(_cts.Token).ContinueWith(async _ =>
             {
-                ts.Cancel();
-                ts.Dispose();
-            }
+                await disposeBuilder(suid);
+            }).Unwrap();
+        }
+
+        public async Task WriteNewPack(byte[] content, int chunkNumb)
+        {
+            if (!hash.TryAdd(chunkNumb, null)) return;
+            await writeQueue.Writer.WriteAsync(new ChunkWriteRQ(content, chunkNumb));
         }
 
         private async Task<bool> AddChunk(byte[] content, int chunkNumb)
         {
-            if (!hash.TryAdd(chunkNumb, null)) return false;
-
             long position = (long)chunkNumb * _chunkSize;
 
             _fs.Position = position;
@@ -54,7 +61,15 @@ namespace NetDriver.AD
 
             await foreach (var chunk in reader.ReadAllAsync(ct))
             {
-                if (await AddChunk(chunk.Content, chunk.ChunkNumb)) break;
+                try
+                {
+                    if (chunk.Content.Length <= 16) continue;
+                    if (await AddChunk(chunk.Content, chunk.ChunkNumb)) break;
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine($"нужно сделать логи но чуть позже ({e})\n\n");
+                }
             }
         }
 
@@ -62,6 +77,16 @@ namespace NetDriver.AD
         {
             public readonly byte[] Content = cnt;
             public readonly int ChunkNumb = numb;
+        }
+        
+        public async Task DisposeAsync()
+        {
+            await _cts.CancelAsync();
+            writeQueue.Writer.TryComplete();
+            await _write;
+
+            await _fs.DisposeAsync();
+            _cts.Dispose();
         }
     }
 }
