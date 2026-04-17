@@ -66,7 +66,11 @@ namespace NetDriver.AD
                     if (chunk.Content.Length <= 16) continue;
                     if (await AddChunk(chunk.Content, chunk.ChunkNumb)) break;
                 }
-                catch(Exception e)
+                catch (OperationCanceledException)
+                {
+
+                }
+                catch (Exception e)
                 {
                     Console.WriteLine($"нужно сделать логи но чуть позже ({e})\n\n");
                 }

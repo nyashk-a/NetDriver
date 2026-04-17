@@ -70,7 +70,7 @@ namespace NetDriver.AD
                     int read = 0;
                     while (read < h.Length)
                     {
-                        read += await sock.ReceiveAsync(h.AsMemory(read, h.Length - read));
+                        read += await sock.ReceiveAsync(h.AsMemory(read, h.Length - read), t);
                     }
                     read = 0;
 
@@ -80,12 +80,16 @@ namespace NetDriver.AD
 
                     while (read < conf.expectedSize)
                     {
-                        read += await sock.ReceiveAsync(lastFragment.AsMemory(read, lastFragment.Length - read));
+                        read += await sock.ReceiveAsync(lastFragment.AsMemory(read, lastFragment.Length - read), t);
                     }
 
                     var msg = new Message(conf, lastFragment);
 
                     await _incomingList.Writer.WriteAsync(new IncomingRequest(sock, msg));
+                }
+                catch (OperationCanceledException)
+                {
+
                 }
                 catch (Exception e)
                 {
@@ -98,46 +102,69 @@ namespace NetDriver.AD
         {
             var reader = _incomingList.Reader;
 
-            await foreach (var ir in reader.ReadAllAsync(cts))
+            try
             {
-                switch (ir.message.msgType)
+                await foreach (var ir in reader.ReadAllAsync(cts))
                 {
-                    case Message.Types.ConfigurateMessage:
-                        var suidC = new Guid(ir.message.content.AsSpan(0, 16));
-                        int singlePackSize = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16, 4));
-                        int packCount = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16 + 4, 4));
-                        string name = FromBinary.Utf16(ir.message.content.AsSpan(16 + 4 + 4, ir.message.content.Length - (16 + 4 + 4)));
-
-                        _buildersList.TryAdd(suidC, new ContentBuilder(name, singlePackSize, packCount, DisposeBuildder, suidC));
-                        break;
-
-
-                    case Message.Types.PartFromFileMessage:
-                        var suidP = new Guid(ir.message.content.AsSpan(0, 16));
-
-                        if (_buildersList.TryGetValue(suidP, out var cb))
-                            await cb.WriteNewPack(ir.message.content, ir.message.packNum.Value);
-                        await SendWithoutCallback(ir.socket, new Message(ToBinary.Utf16("catch"), Message.Types.AnswerToMessage, ir.message.msgSuid));
-                        break;
-
-
-                    case Message.Types.AnswerToMessage:
-                        if (_waitingList.TryGetValue(ir.message.msgSuid, out var rq))
+                    try
+                    {
+                        switch (ir.message.msgType)
                         {
-                            rq.Activate(ir.message);
-                        }
-                        break;
+                            case Message.Types.ConfigurateMessage:
+                                var suidC = new Guid(ir.message.content.AsSpan(0, 16));
+                                int singlePackSize = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16, 4));
+                                int packCount = FromBinary.LittleEndian<int>(ir.message.content.AsSpan(16 + 4, 4));
+                                string name = FromBinary.Utf16(ir.message.content.AsSpan(16 + 4 + 4, ir.message.content.Length - (16 + 4 + 4)));
+
+                                _buildersList.TryAdd(suidC, new ContentBuilder(name, singlePackSize, packCount, DisposeBuildder, suidC));
+                                await SendWithoutCallback(ir.socket, new Message(ToBinary.Utf16("81"), Message.Types.AnswerToMessage, ir.message.msgSuid));
+                                break;
 
 
-                    default:
-                        var ts = new CancellationTokenSource();
-                        if (!_backgroundTask.TryAdd(Processor(ir.message, ir.socket, ts.Token), ts))
-                        {
-                            ts.Cancel();
-                            ts.Dispose();
+                            case Message.Types.PartFromFileMessage:
+                                var suidP = new Guid(ir.message.content.AsSpan(0, 16));
+
+                                if (_buildersList.TryGetValue(suidP, out var cb))
+                                    await cb.WriteNewPack(ir.message.content, ir.message.packNum.Value);
+                                await SendWithoutCallback(ir.socket, new Message(ToBinary.Utf16("catch"), Message.Types.AnswerToMessage, ir.message.msgSuid));
+                                break;
+
+
+                            case Message.Types.AnswerToMessage:
+                                if (_waitingList.TryGetValue(ir.message.msgSuid, out var rq))
+                                {
+                                    rq.Activate(ir.message);
+                                }
+                                break;
+
+
+                            default:
+                                var ts = new CancellationTokenSource();
+                                if (!_backgroundTask.TryAdd(Processor(ir.message, ir.socket, ts.Token), ts))
+                                {
+                                    ts.Cancel();
+                                    ts.Dispose();
+                                }
+                                break;
                         }
-                        break;
+                    }
+                    catch (OperationCanceledException)
+                    {
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"нужно сделать логи но чуть позже ({e})\n\n");
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"нужно сделать логи но чуть позже ({e})\n\n");
             }
         }
 

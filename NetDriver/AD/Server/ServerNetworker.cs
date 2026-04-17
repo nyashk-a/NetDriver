@@ -35,12 +35,24 @@ namespace NetDriver.AD.Server
         {
             while (_working)
             {
-                var clientConnection = await socket.AcceptAsync(ct);
-                var ts = new CancellationTokenSource();
-                if (!_backgroundTask.TryAdd(accepting(clientConnection, ts.Token), ts))
+                try
                 {
-                    ts.Cancel();
-                    ts.Dispose();
+                    if (ct.IsCancellationRequested) break;
+                    var clientConnection = await socket.AcceptAsync(ct);
+                    var ts = new CancellationTokenSource();
+                    if (!_backgroundTask.TryAdd(accepting(clientConnection, ts.Token), ts))
+                    {
+                        ts.Cancel();
+                        ts.Dispose();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"нужно сделать логи но чуть позже ({e})\n\n");
                 }
             }
         }

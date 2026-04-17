@@ -20,6 +20,7 @@ namespace NetDriver.AD.Client
         {
             socket.Connect(adress);
 
+
             var ts = new CancellationTokenSource();
             if (!_backgroundTask.TryAdd(ListeningSocket(socket, ts.Token), ts))
             {
