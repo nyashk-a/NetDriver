@@ -10,7 +10,7 @@ namespace NetDriver.AD
 {
     public abstract partial class INetworker
     {
-        public async Task SendMassiveMessage(Socket sock, string pathToFile, int part = 1024 * 1024 * 32)
+        public async Task SendMassiveMessage(Socket sock, string pathToFile, MassiveSendParametr param, int part = 1024 * 1024 * 32)
         {
             try
             {
@@ -38,21 +38,37 @@ namespace NetDriver.AD
                     var sendingData = new Dictionary<Task<Message?>, int>();
                     using (FileStream fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
                     {
-                        byte[] buffer = new byte[part];
-                        int sn = 0;
-                        int bytesRead;
 
-                        while ((bytesRead = await fs.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        int[] partIndices = Enumerable.Range(0, piceCount).ToArray();
+                        switch (param)
                         {
-                            Console.WriteLine($"send pack №{sn}");
-                            //[guid : 16][content : contentsize]
+                            case MassiveSendParametr.Random:
+                                Random.Shared.Shuffle(partIndices);
+                                break;
+                            case MassiveSendParametr.Reverse:
+                                Array.Reverse(partIndices);
+                                break;
+                        }
+                        
+
+                        byte[] buffer = new byte[part];
+
+                        foreach (int sn in partIndices)
+                        {
+                            long offset = sn * part;
+                            int bytesToRead = (int)Math.Min(part, fileSize - offset);
+
+                            fs.Seek(offset, SeekOrigin.Begin);
+                            int bytesRead = await fs.ReadAsync(buffer, 0, bytesToRead);
+
+                            Console.WriteLine($"send pack №{sn} (random order)");
+
                             byte[] dataToSend = new byte[bytesRead + 16];
                             Array.Copy(fileSuid.ToByteArray(), 0, dataToSend, 0, 16);
                             Array.Copy(buffer, 0, dataToSend, 16, bytesRead);
 
                             var msg = new Message(dataToSend, Message.Types.PartFromFileMessage, null, sn);
                             sendingData.Add(SendWithCallback(sock, msg), sn);
-                            sn++;
                         }
                     }
 

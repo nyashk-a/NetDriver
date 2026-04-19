@@ -22,4 +22,11 @@ namespace NetDriver.AD
         public readonly Socket socket = sock;
         public readonly Message message = msg;
     }
+
+    public enum MassiveSendParametr
+    {
+        Straight,
+        Random,
+        Reverse,
+    }
 }
