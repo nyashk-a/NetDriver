@@ -31,6 +31,9 @@ namespace NetDriver.AE
                     await socket.SendAsync(content);
                 }
             }
+            catch (OperationCanceledException)
+            {
+            }
             finally
             {
                 outcomingBuffer.Writer.TryComplete();

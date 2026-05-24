@@ -6,7 +6,7 @@ using System.Text;
 namespace NetDriver.AE
 {
     public delegate Task IncomingEvent(ResultContent content); 
-    internal class LogicProcessor : IDisposable
+    internal class LogicProcessor : IAsyncDisposable
     {
         private IncomingEvent _incomingEvent;
 
@@ -45,7 +45,7 @@ namespace NetDriver.AE
             {
                 await foreach (var sf in input.simpleleOutput.Reader.ReadAllAsync(cts.Token))
                 {
-                    await _incomingEvent.Invoke(new ResultContent((ResultContent.Type)sf.header.type, sf.content.content));
+                    await _incomingEvent.Invoke(new ResultContent((ResultContent.Type)sf.header.type, sf.content.content, sf.content.frameuid));
                 }
             }
             catch (OperationCanceledException)
@@ -108,51 +108,44 @@ namespace NetDriver.AE
 
             while (!cts.IsCancellationRequested)
             {
-                try
-                {
-                    var h = await incoming.GetChunk(9);
+                var h = await incoming.GetChunk(9);
+                if (h.Length == 0) continue;
+                var header = FrameParser.UnpackHeader(h);
 
-                    var header = FrameParser.UnpackHeader(h);
+                var c = await incoming.GetChunk(header.contentSize);
+                if (c.Length == 0) continue;
+                var content = FrameParser.UnpackContent(c);
 
-                    var c = await incoming.GetChunk(header.contentSize);
-
-                    var content = FrameParser.UnpackContent(c);
-
-                    await input.Distribute(new netframe(header, content));
-                }
-                catch (OperationCanceledException)
-                {
-                }
+                await input.Distribute(new netframe(header, content));
             }
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             _cts.Cancel();
-            await A;
-            await B;
-            await C;
-            await D;
-            await E;
-            _cts.Dispose();
 
             await outcoming.DisposeAsync();
             await incoming.DisposeAsync();
             output.Dispose();
             input.Dispose();
-        }
 
-        void IDisposable.Dispose()
-        {
-            DisposeAsync().GetAwaiter().GetResult();
+            await A;
+            await B;
+            await C;
+            await D;
+            await E;
+
+            _cts.Dispose();
         }
     }
 
-    public class ResultContent(ResultContent.Type type, byte[] content)
+    public class ResultContent(ResultContent.Type type, byte[] content, Guid? uid=null)
     {
         public readonly Type type = type;
 
         public readonly byte[] content = content;
+
+        public readonly Guid? frameuid = uid;
 
         public enum Type : byte
         {

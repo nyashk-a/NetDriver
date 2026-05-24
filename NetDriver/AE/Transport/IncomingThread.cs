@@ -67,30 +67,35 @@ namespace NetDriver.AE
         public async Task<byte[]> GetChunk(uint chunkSize)
         {
             if (_disposed)
-                throw new ObjectDisposedException(nameof(IncomingController));
+                return new byte[0];
 
             var result = new byte[chunkSize];
             int totalRead = 0;
-
-            while (totalRead < chunkSize)
+            try
             {
-                ReadResult readResult = await _pipe.Reader.ReadAsync(_cts.Token);
-                ReadOnlySequence<byte> buffer = readResult.Buffer;
-                long available = buffer.Length;
-                int needed = (int)chunkSize - totalRead;
-                int toCopy = (int)Math.Min(available, needed);
-
-                buffer.Slice(0, toCopy).CopyTo(result.AsSpan(totalRead));
-                totalRead += toCopy;
-
-                _pipe.Reader.AdvanceTo(buffer.Slice(toCopy).Start, buffer.Slice(toCopy).Start);
-
-                if (readResult.IsCompleted && buffer.Length == 0)
+                while (totalRead < chunkSize)
                 {
-                    throw new InvalidOperationException("Connection closed before complete chunk was received.");
+                    ReadResult readResult = await _pipe.Reader.ReadAsync(_cts.Token);
+                    ReadOnlySequence<byte> buffer = readResult.Buffer;
+                    long available = buffer.Length;
+                    int needed = (int)chunkSize - totalRead;
+                    int toCopy = (int)Math.Min(available, needed);
+
+                    buffer.Slice(0, toCopy).CopyTo(result.AsSpan(totalRead));
+                    totalRead += toCopy;
+
+                    _pipe.Reader.AdvanceTo(buffer.Slice(toCopy).Start, buffer.Slice(toCopy).Start);
+
+                    if (readResult.IsCompleted && buffer.Length == 0)
+                    {
+                        throw new InvalidOperationException("Connection closed before complete chunk was received.");
+                    }
                 }
             }
-
+            catch (OperationCanceledException)
+            {
+                return new byte[0];
+            }
             return result;
         }
         public async ValueTask DisposeAsync()

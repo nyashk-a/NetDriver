@@ -28,6 +28,11 @@ namespace NetDriver.AE
             }
         }
 
+        public async Task Answer(byte[] content, Guid suid)
+        {
+            await _logic.output.SendSingle(FrameParser.BuildFrame(netframe.Type.callbackInto, suid, content));
+        }
+
         public async Task SendFile(string path, FileParametrs param, int part = 1024 * 1024 * 32)
         {
             await _logic.output.SendFile(path, param, part);
