@@ -32,5 +32,10 @@ namespace NetDriver.AE
         {
             await _logic.output.SendFile(path, param, part);
         }
+
+        public async Task Dispose()
+        {
+            await _logic.DisposeAsync();
+        }
     }
 }

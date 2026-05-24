@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
+using System.Linq.Expressions;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -82,7 +83,7 @@ namespace NetDriver.AE
                 buffer.Slice(0, toCopy).CopyTo(result.AsSpan(totalRead));
                 totalRead += toCopy;
 
-                _pipe.Reader.AdvanceTo(buffer.Slice(toCopy).Start, buffer.End);
+                _pipe.Reader.AdvanceTo(buffer.Slice(toCopy).Start, buffer.Slice(toCopy).Start);
 
                 if (readResult.IsCompleted && buffer.Length == 0)
                 {

@@ -8,7 +8,7 @@ namespace NetDriver.AE
     public delegate Task IncomingEvent(ResultContent content); 
     internal class LogicProcessor : IDisposable
     {
-        private readonly IncomingEvent _incomingEvent;
+        private IncomingEvent _incomingEvent;
 
         public readonly FrameControllerOutput output = new();
         private readonly FrameControllerInput input = new();
@@ -41,9 +41,15 @@ namespace NetDriver.AE
         {
             var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
 
-            await foreach (var sf in input.simpleleOutput.Reader.ReadAllAsync(cts.Token))
+            try
             {
-                await _incomingEvent.Invoke(new ResultContent((ResultContent.Type)sf.header.type, sf.content.content));
+                await foreach (var sf in input.simpleleOutput.Reader.ReadAllAsync(cts.Token))
+                {
+                    await _incomingEvent.Invoke(new ResultContent((ResultContent.Type)sf.header.type, sf.content.content));
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
 
@@ -51,9 +57,15 @@ namespace NetDriver.AE
         {
             var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
 
-            await foreach (var sf in input.answersOnReq.Reader.ReadAllAsync(cts.Token))
+            try 
+            { 
+                await foreach (var sf in input.answersOnReq.Reader.ReadAllAsync(cts.Token))
+                {
+                    output.CatchAnswer(sf);
+                }
+            }
+            catch (OperationCanceledException)
             {
-                output.CatchAnswer(sf);
             }
         }
 
@@ -61,9 +73,16 @@ namespace NetDriver.AE
         {
             var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
 
-            await foreach (var sf in input.SystemSend.Reader.ReadAllAsync(cts.Token))
+            try
             {
-                await output.SendSingle(sf);
+
+                await foreach (var sf in input.SystemSend.Reader.ReadAllAsync(cts.Token))
+                {
+                    await output.SendSingle(sf);
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
 
@@ -71,9 +90,15 @@ namespace NetDriver.AE
         {
             var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
 
-            await foreach (var sf in output.outcomingStack.Reader.ReadAllAsync(cts.Token))
+            try
             {
-                await outcoming.Send(sf);
+                await foreach (var sf in output.outcomingStack.Reader.ReadAllAsync(cts.Token))
+                {
+                    await outcoming.Send(sf);
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
 
@@ -83,15 +108,21 @@ namespace NetDriver.AE
 
             while (!cts.IsCancellationRequested)
             {
-                var h = await incoming.GetChunk(9);
+                try
+                {
+                    var h = await incoming.GetChunk(9);
 
-                var header = FrameParser.UnpackHeader(h);
+                    var header = FrameParser.UnpackHeader(h);
 
-                var c = await incoming.GetChunk(header.contentSize);
+                    var c = await incoming.GetChunk(header.contentSize);
 
-                var content = FrameParser.UnpackContent(c);
+                    var content = FrameParser.UnpackContent(c);
 
-                await input.Distribute(new netframe(header, content));
+                    await input.Distribute(new netframe(header, content));
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
 
