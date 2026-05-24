@@ -7,14 +7,14 @@ using System.Threading.Channels;
 
 namespace NetDriver.AE
 {
-    internal class OutcomingThread : IDisposable
+    internal class OutcomingController : IAsyncDisposable
     {
         private readonly Socket socket;
         private readonly Task writing;
         private readonly Channel<byte[]> outcomingBuffer = Channel.CreateUnbounded<byte[]>();
         private readonly CancellationTokenSource _cts = new();
 
-        public OutcomingThread(Socket sock)
+        public OutcomingController(Socket sock)
         {
             socket = sock;
             writing = Sending();
@@ -42,16 +42,11 @@ namespace NetDriver.AE
             await outcomingBuffer.Writer.WriteAsync(content);
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             _cts.Cancel();
             await writing;
             _cts.Dispose();
-        }
-
-        void IDisposable.Dispose()
-        {
-            DisposeAsync().GetAwaiter().GetResult();
         }
     }
 }

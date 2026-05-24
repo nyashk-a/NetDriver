@@ -1,82 +1,109 @@
 using System;
-using System.Collections.Concurrent;
+using System.Buffers;
+using System.IO;
+using System.IO.Pipelines;
 using System.Net.Sockets;
-using System.Threading.Channels;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NetDriver.AE
 {
-    internal class IncomingController : IDisposable
+    internal class IncomingController : IAsyncDisposable
     {
-        private readonly Socket socket;
-        private readonly Task redading;
-        private readonly Channel<byte> incomingBuffer = Channel.CreateUnbounded<byte>();
+        private readonly Socket _socket;
+        private readonly Task _readingTask;
+        private readonly Pipe _pipe = new Pipe();
         private readonly CancellationTokenSource _cts = new();
+        private bool _disposed;
 
-        public IncomingController(Socket sock)
+        public IncomingController(Socket socket)
         {
-            socket = sock;
-            redading = Reading();
+            _socket = socket ?? throw new ArgumentNullException(nameof(socket));
+            _readingTask = ReadingAsync();
         }
-
-        private async Task Reading()
+        private async Task ReadingAsync()
         {
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(8192);
             try
             {
                 while (!_cts.IsCancellationRequested)
                 {
+                    int received;
                     try
                     {
-                        var buffer = new byte[2048];
-                        var realCount = await socket.ReceiveAsync(buffer, _cts.Token);
-                        for (int i = 0; i < realCount; i++)
-                        {
-                            await incomingBuffer.Writer.WriteAsync(buffer[i], _cts.Token);
-                        }
+                        received = await _socket.ReceiveAsync(buffer.AsMemory(0, buffer.Length), _cts.Token);
                     }
-                    catch (Exception e)
+                    catch (OperationCanceledException)
                     {
-                        Console.WriteLine(e);
+                        break;
                     }
+                    catch (SocketException ex)
+                    {
+                        Console.WriteLine($"[IncomingController] Socket error: {ex.Message}");
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[IncomingController] Unexpected error: {ex}");
+                        break;
+                    }
+
+                    if (received == 0)
+                    {
+                        break;
+                    }
+
+                    await _pipe.Writer.WriteAsync(buffer.AsMemory(0, received), _cts.Token);
                 }
             }
             finally
             {
-                incomingBuffer.Writer.TryComplete();
+                ArrayPool<byte>.Shared.Return(buffer);
+                await _pipe.Writer.CompleteAsync();
             }
         }
 
-        public async Task<byte[]> GetChunk(UInt32 chunkSize, int timeout=2000)
+        public async Task<byte[]> GetChunk(uint chunkSize)
         {
-            var buffer = new byte[chunkSize];
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(IncomingController));
 
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
-            cts.CancelAfter(timeout);
+            var result = new byte[chunkSize];
+            int totalRead = 0;
 
-            for (int i = 0; i < chunkSize; i++)
+            while (totalRead < chunkSize)
             {
-                try
+                ReadResult readResult = await _pipe.Reader.ReadAsync(_cts.Token);
+                ReadOnlySequence<byte> buffer = readResult.Buffer;
+                long available = buffer.Length;
+                int needed = (int)chunkSize - totalRead;
+                int toCopy = (int)Math.Min(available, needed);
+
+                buffer.Slice(0, toCopy).CopyTo(result.AsSpan(totalRead));
+                totalRead += toCopy;
+
+                _pipe.Reader.AdvanceTo(buffer.Slice(toCopy).Start, buffer.End);
+
+                if (readResult.IsCompleted && buffer.Length == 0)
                 {
-                    buffer[i] = await incomingBuffer.Reader.ReadAsync(cts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
+                    throw new InvalidOperationException("Connection closed before complete chunk was received.");
                 }
             }
 
-            return buffer;
+            return result;
         }
-
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
+            if (_disposed) return;
+            _disposed = true;
+
             _cts.Cancel();
-            await redading;
-            _cts.Dispose();
-        }
 
-        void IDisposable.Dispose()
-        {
-            DisposeAsync().GetAwaiter().GetResult();
+            await _readingTask.ConfigureAwait(false);
+
+            _cts.Dispose();
+            _pipe.Writer.Complete();
+            _pipe.Reader.Complete();
         }
     }
 }

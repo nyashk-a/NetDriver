@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Channels;
 
-namespace NetDriver.NetDriver.AE.Logic
+namespace NetDriver.AE
 {
-    internal class FrameControllerInput
+    internal class FrameControllerInput : IDisposable
     {
         public readonly Channel<netframe> simpleleOutput = Channel.CreateUnbounded<netframe>();
         public readonly Channel<netframe> answersOnReq = Channel.CreateUnbounded<netframe>();
@@ -17,6 +17,7 @@ namespace NetDriver.NetDriver.AE.Logic
         public readonly Channel<netframe> SystemSend = Channel.CreateUnbounded<netframe>();
 
         private readonly ConcurrentDictionary<Guid, ContentBuilder> builderList = new();
+
         public async Task Distribute(netframe frame)
         {
             switch (frame.header.type)
@@ -61,6 +62,13 @@ namespace NetDriver.NetDriver.AE.Logic
         {
             if (builderList.Remove(uid, out var res))
                 await res.DisposeAsync();
+        }
+
+        public void Dispose()
+        {
+            simpleleOutput.Writer.TryComplete();
+            answersOnReq.Writer.TryComplete();
+            SystemSend.Writer.TryComplete();
         }
     }
 }
