@@ -1,5 +1,6 @@
 ﻿using AVcontrol;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
@@ -14,8 +15,6 @@ namespace NetDriver.AE
         public readonly Channel<byte[]> outcomingStack = Channel.CreateUnbounded<byte[]>();
 
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<netframe>> waitingCallback = new();
-
-        private readonly ConcurrentDictionary<Guid, string> fileSending = new();
 
         public async Task SendSingle(netframe message)
         {
@@ -93,7 +92,7 @@ namespace NetDriver.AE
                             break;
                     }
 
-                    byte[] buffer = new byte[part];
+                    byte[] buffer = ArrayPool<byte>.Shared.Rent(part);
 
                     foreach (int sn in partIndices)
                     {
@@ -112,13 +111,12 @@ namespace NetDriver.AE
                         var msg = FrameParser.BuildFrame(netframe.Type.flowPart, Guid.NewGuid(), dataToSend, (UInt32)sn);
                         sendingData.Add(SendWithCallback(msg, 500), sn);
                     }
+                    ArrayPool<byte>.Shared.Return(buffer);
                 }
 
                 while (sendingData.Any())
                 {
                     var ct = await Task.WhenAny(sendingData.Keys);
-
-
 
                     var res = await ct;
 
@@ -130,14 +128,14 @@ namespace NetDriver.AE
                         {
                             fs.Seek(sn * part, SeekOrigin.Begin);
                             int bytesRead = fs.Read(buffer, 0, part);
-                        }
-                        byte[] dataToSend = new byte[part + 16];
-                        Array.Copy(fileSuid.ToByteArray(), 0, dataToSend, 0, 16);
-                        Array.Copy(buffer, 0, dataToSend, 16, part);
+                            byte[] dataToSend = new byte[bytesRead + 16];
+                            Array.Copy(fileSuid.ToByteArray(), 0, dataToSend, 0, 16);
+                            Array.Copy(buffer, 0, dataToSend, 16, part);
 
-                        Console.WriteLine($"re-send pack №{sn}");
-                        var msg = FrameParser.BuildFrame(netframe.Type.flowPart, Guid.NewGuid(), dataToSend, (UInt32)sn);
-                        sendingData.Add(SendWithCallback(msg, 500), sn);
+                            Console.WriteLine($"re-send pack №{sn}");
+                            var msg = FrameParser.BuildFrame(netframe.Type.flowPart, Guid.NewGuid(), dataToSend, (UInt32)sn);
+                            sendingData.Add(SendWithCallback(msg, 500), sn);
+                        }
                     }
                     sendingData.Remove(ct, out _);
                 }
