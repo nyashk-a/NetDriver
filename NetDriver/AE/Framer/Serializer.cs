@@ -8,11 +8,13 @@ namespace NetDriver.AE
     {
         public static byte[] PackHeader(netframe.Header header)
         {
-            var output = new byte[4 + 1];
+            var output = new byte[4 + 1 + 4];
 
             Buffer.BlockCopy(ToBinary.LittleEndian(header.contentSize), 0, output, 0, 4);
 
             output[4] = (byte)header.type;
+
+            Buffer.BlockCopy(ToBinary.LittleEndian(header.numInFlow), 0, output, 4 + 1, 4);
 
             return output;
         }

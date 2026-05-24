@@ -6,10 +6,11 @@ namespace NetDriver.AE
     {
         public readonly Header header = h;
         public readonly Content content = c;
-        public struct Header(UInt32 cs, Type ty)
+        public struct Header(UInt32 cs, Type ty, UInt32 num = 0)
         {
             public readonly UInt32 contentSize = cs;
             public readonly Type type = ty;
+            public readonly UInt32 numInFlow = num;
         }
 
         public struct Content(Guid fg, byte[] c)
@@ -22,8 +23,8 @@ namespace NetDriver.AE
         public enum Type : byte
         {
             single = 0,
-            callbackFrom = 1,
-            callbackInto = 2,
+            callbackFrom = 1, // надо ответитрь
+            callbackInto = 2, // есть сам ответ
             configurateFlow = 3,
             flowPart = 4,
         }

@@ -9,7 +9,8 @@ namespace NetDriver.AE
         {
             var output = new netframe.Header(
                 FromBinary.LittleEndian<UInt32>(header.AsSpan(0, 4)),
-                (netframe.Type)header[4]
+                (netframe.Type)header[4],
+                FromBinary.LittleEndian<UInt32>(header.AsSpan(5, 4))
             );
 
             return output;
@@ -35,9 +36,9 @@ namespace NetDriver.AE
             return output;
         }
 
-        public static netframe BuildFrame(netframe.Type t, Guid frameuid, byte[] content)
+        public static netframe BuildFrame(netframe.Type t, Guid frameuid, byte[] content, UInt32 num=0)
         {
-            var h = new netframe.Header((UInt32)(content.Length + 16), t);
+            var h = new netframe.Header((UInt32)(content.Length + 16), t, num);
 
             var c = new netframe.Content(frameuid, content);
 

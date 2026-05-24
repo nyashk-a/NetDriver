@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Channels;
 
-namespace NetDriver.NetDriver.AE.Transport
+namespace NetDriver.AE
 {
     internal class OutcomingThread : IDisposable
     {
