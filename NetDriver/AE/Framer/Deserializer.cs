@@ -5,44 +5,41 @@ namespace NetDriver.AE
 {
     internal static class FrameParser
     {
-        public static netframe.Header UnpackHeader(byte[] header)
+        private const int HeaderSize = 9;
+        public static netframe.Header UnpackHeader(ReadOnlySpan<byte> header)
         {
-            var output = new netframe.Header(
-                FromBinary.LittleEndian<UInt32>(header.AsSpan(0, 4)),
-                (netframe.Type)header[4],
-                FromBinary.LittleEndian<UInt32>(header.AsSpan(5, 4))
-            );
+            var length = FromBinary.LittleEndian<uint>(header.Slice(0, 4));
+            var type = (netframe.Type)header[4];
+            var num = FromBinary.LittleEndian<uint>(header.Slice(5, 4));
 
-            return output;
+            return new netframe.Header(length, type, num);
+        }
+        public static netframe.Content UnpackContent(ReadOnlySpan<byte> content)
+        {
+            var guid = new Guid(content.Slice(0, 16));
+            var payload = content.Slice(16).ToArray();
+            return new netframe.Content(guid, payload);
         }
 
-        public static netframe.Content UnpackContent(byte[] content)
+        public static netframe UnpackFrame(ReadOnlySpan<byte> frame)
         {
-            var output = new netframe.Content(
-                new Guid(content.AsSpan(0, 16)),
-                content.AsSpan(16).ToArray()
-            );
+            if (frame.Length < HeaderSize)
+                throw new ArgumentException($"Frame must be at least {HeaderSize} bytes", nameof(frame));
 
-            return output;
+            var headerSpan = frame.Slice(0, HeaderSize);
+            var header = UnpackHeader(headerSpan);
+
+            var contentSpan = frame.Slice(HeaderSize);
+            var content = UnpackContent(contentSpan);
+
+            return new netframe(header, content);
         }
 
-        public static netframe UnpackFrame(byte[] frame)
+        public static netframe BuildFrame(netframe.Type t, Guid frameuid, byte[] content, uint num = 0)
         {
-            var h = UnpackHeader(frame.AsSpan(0, 5).ToArray());
-            var c = UnpackContent(frame.AsSpan(5).ToArray());
-
-            var output = new netframe(h, c);
-
-            return output;
-        }
-
-        public static netframe BuildFrame(netframe.Type t, Guid frameuid, byte[] content, UInt32 num=0)
-        {
-            var h = new netframe.Header((UInt32)(content.Length + 16), t, num);
-
-            var c = new netframe.Content(frameuid, content);
-
-            return new netframe(h, c);
+            var header = new netframe.Header((uint)(content.Length + 16), t, num);
+            var frameContent = new netframe.Content(frameuid, content);
+            return new netframe(header, frameContent);
         }
     }
 }

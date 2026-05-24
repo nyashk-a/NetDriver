@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NetDriver.AE
 {
-    public delegate Task IncomingEvent(IncomingContent content); 
+    public delegate Task IncomingEvent(ResultContent content); 
     internal class LogicProcessor : IDisposable
     {
         private readonly IncomingEvent _incomingEvent;
@@ -43,7 +43,7 @@ namespace NetDriver.AE
 
             await foreach (var sf in input.simpleleOutput.Reader.ReadAllAsync(cts.Token))
             {
-                await _incomingEvent.Invoke(new IncomingContent((IncomingContent.Type)sf.header.type, sf.content.content));
+                await _incomingEvent.Invoke(new ResultContent((ResultContent.Type)sf.header.type, sf.content.content));
             }
         }
 
@@ -117,7 +117,7 @@ namespace NetDriver.AE
         }
     }
 
-    public class IncomingContent(IncomingContent.Type type, byte[] content)
+    public class ResultContent(ResultContent.Type type, byte[] content)
     {
         public readonly Type type = type;
 
@@ -129,5 +129,12 @@ namespace NetDriver.AE
             from = 1,
             into = 2,
         }
+    }
+
+    public enum FileParametrs
+    {
+        Straight,
+        Random,
+        Reverse,
     }
 }

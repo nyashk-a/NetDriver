@@ -156,12 +156,5 @@ namespace NetDriver.AE
             outcomingStack.Writer.TryComplete();
             _cts.Dispose();
         }
-
-        public enum FileParametrs
-        {
-            Straight,
-            Random,
-            Reverse,
-        }
     }
 }
