@@ -30,11 +30,11 @@ namespace NetDriver.AE
             incoming = new(sock);
             outcoming = new(sock);
 
-            A = ExecutorA();
-            B = ExecutorB();
-            C = ExecutorC();
-            D = ExecutorD();
-            E = ExecutorE();
+            A = Task.Run(ExecutorA);
+            B = Task.Run(ExecutorB);
+            C = Task.Run(ExecutorC);
+            D = Task.Run(ExecutorD);
+            E = Task.Run(ExecutorE);
         }
 
         private async Task ExecutorA()
