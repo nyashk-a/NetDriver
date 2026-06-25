@@ -22,24 +22,31 @@ namespace NetDriver.AE
             await outcomingStack.Writer.WriteAsync(FrameBuilder.PackContent(message.content));
         }
 
-        public async Task<netframe?> SendWithCallback(netframe message, int timeout=2000)
+        public async Task<netframe?> SendWithCallback(netframe message, int timeout = 2000)
         {
             await SendSingle(message);
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
             cts.CancelAfter(timeout);
 
-            var tcs = new TaskCompletionSource<netframe>(cts.Token);
+            var tcs = new TaskCompletionSource<netframe>(TaskCreationOptions.RunContinuationsAsynchronously);
             waitingCallback.TryAdd(message.content.frameuid, tcs);
 
-            try
+            using (cts.Token.Register(() =>
             {
-                await tcs.Task;
-                return tcs.Task.Result;
-            }
-            catch (OperationCanceledException)
+                if (waitingCallback.TryRemove(message.content.frameuid, out var tcsLocal))
+                    tcsLocal.TrySetCanceled();
+            }))
             {
-                return null;
+                try
+                {
+                    await tcs.Task.WaitAsync(cts.Token);
+                    return tcs.Task.Result;
+                }
+                catch (OperationCanceledException)
+                {
+                    return null;
+                }
             }
         }
 
@@ -47,7 +54,7 @@ namespace NetDriver.AE
         {
             if (waitingCallback.TryGetValue(content.content.frameuid, out var res))
             {
-                res.SetResult(content);
+                res.TrySetResult(content);
                 return true;
             }
             return false;
