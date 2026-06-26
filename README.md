@@ -21,45 +21,45 @@ NetDriver AE follows a layered pipeline architecture:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      Networker (API)                        │
-│  Send() / Answer() / SendFile() — public interface         │
+│  Send() / Answer() / SendFile() — public interface          │
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                   LogicProcessor                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────┐  │
-│  │ Executor A  │  │ Executor B  │  │ Executor C/D/E    │  │
-│  │ (incoming)  │  │ (callbacks) │  │ (sending / I/O)   │  │
-│  └─────────────┘  └─────────────┘  └───────────────────┘  │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────┐    │
+│  │ Executor A  │  │ Executor B  │  │ Executor C/D/E    │    │
+│  │ (incoming)  │  │ (callbacks) │  │ (sending / I/O)   │    │
+│  └─────────────┘  └─────────────┘  └───────────────────┘    │
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │              FrameController (Input / Output)               │
-│  ┌─────────────────────┐    ┌───────────────────────────┐  │
-│  │ FrameControllerInput │    │ FrameControllerOutput     │  │
-│  │  • simpleleOutput   │    │  • outcomingStack        │  │
-│  │  • answersOnReq     │    │  • SendWithCallback()    │  │
-│  │  • SystemSend       │    │  • SendSingle()          │  │
-│  │  • Distribute()     │    │  • SendFile()            │  │
-│  └─────────────────────┘    └───────────────────────────┘  │
+│  ┌─────────────────────┐    ┌───────────────────────────┐   │
+│  │ FrameControllerInput│    │ FrameControllerOutput     │   │
+│  │  • simpleleOutput   │    │  • outcomingStack         │   │
+│  │  • answersOnReq     │    │  • SendWithCallback()     │   │
+│  │  • SystemSend       │    │  • SendSingle()           │   │
+│  │  • Distribute()     │    │  • SendFile()             │   │
+│  └─────────────────────┘    └───────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                   Framer (Serialization)                    │
-│  ┌───────────────┐  ┌─────────────────┐  ┌───────────────┐ │
-│  │ FrameBuilder  │  │  FrameParser    │  │   netframe    │ │
-│  │  PackHeader() │  │  UnpackHeader() │  │  Header       │ │
-│  │  PackContent()│  │  UnpackContent()│  │  Content      │ │
-│  │  PackFrame()  │  │  UnpackFrame()  │  │  Type enum    │ │
-│  └───────────────┘  └─────────────────┘  └───────────────┘ │
+│  ┌───────────────┐  ┌─────────────────┐  ┌───────────────┐  │
+│  │ FrameBuilder  │  │  FrameParser    │  │   netframe    │  │
+│  │  PackHeader() │  │  UnpackHeader() │  │  Header       │  │
+│  │  PackContent()│  │  UnpackContent()│  │  Content      │  │
+│  │  PackFrame()  │  │  UnpackFrame()  │  │  Type enum    │  │
+│  └───────────────┘  └─────────────────┘  └───────────────┘  │
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                   Transport Layer                           │
-│  ┌─────────────────────┐    ┌───────────────────────────┐  │
-│  │ IncomingController  │    │ OutcomingController       │  │
-│  │  • Pipe-based read  │    │  • Channel-based write    │  │
-│  │  • GetChunk()       │    │  • Send()                │  │
-│  └─────────────────────┘    └───────────────────────────┘  │
+│  ┌─────────────────────┐    ┌───────────────────────────┐   │
+│  │ IncomingController  │    │ OutcomingController       │   │
+│  │  • Pipe-based read  │    │  • Channel-based write    │   │
+│  │  • GetChunk()       │    │  • Send()                 │   │
+│  └─────────────────────┘    └───────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
